@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    driver-class-name: ${DB_DRIVER}
+  jpa:
+    hibernate:
+      ddl-auto: "update"
+
+jwt:
+  secret: ${JWT_SECRET}
