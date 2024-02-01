@@ -20,10 +20,18 @@ public class Recipient {
     @Column(unique=true, nullable=false)
     private String name;
 
+    @ManyToOne
+    @JoinColumn(name="client_id", nullable=false)
+    private Client client;
+
     @OneToMany(mappedBy="recipient")
     private List<MoneyTransaction> transactions;
 
     public Recipient(RecipientDTO data) {
         this.name = data.name();
+    }
+
+    public Long getClientId() {
+        return (client != null) ? client.getId() : null;
     }
 }

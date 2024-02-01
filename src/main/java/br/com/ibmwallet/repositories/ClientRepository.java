@@ -1,6 +1,8 @@
 package br.com.ibmwallet.repositories;
 
+import br.com.ibmwallet.entities.Category;
 import br.com.ibmwallet.entities.Client;
+import br.com.ibmwallet.entities.MoneyTransaction;
 import br.com.ibmwallet.entities.Recipient;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

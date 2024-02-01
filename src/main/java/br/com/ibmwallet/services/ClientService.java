@@ -29,10 +29,10 @@ public class ClientService {
 
 
     public List<ClientDTO> getAll() {
-        List<Client> categories = clientRepository.findAll();
+        List<Client> clients = clientRepository.findAll();
         List<ClientDTO> response = new ArrayList<>();
 
-        for (Client client:categories) {
+        for (Client client:clients) {
             response.add(new ClientDTO(client));
         }
 

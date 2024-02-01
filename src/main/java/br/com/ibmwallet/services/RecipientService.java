@@ -1,7 +1,9 @@
 package br.com.ibmwallet.services;
 
 import br.com.ibmwallet.dtos.RecipientDTO;
+import br.com.ibmwallet.entities.Client;
 import br.com.ibmwallet.entities.Recipient;
+import br.com.ibmwallet.repositories.ClientRepository;
 import br.com.ibmwallet.repositories.RecipientRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,8 @@ import java.util.Optional;
 public class RecipientService {
     @Autowired
     private RecipientRepository recipientRepository;
+    @Autowired
+    private ClientRepository clientRepository;
 
     public List<RecipientDTO> getAll() {
         List<Recipient> categories = recipientRepository.findAll();
@@ -28,13 +32,32 @@ public class RecipientService {
         return response;
     }
 
-    public ResponseEntity<String> save(RecipientDTO data) {
-        if (data.name() == null) {
-            return new ResponseEntity<>("Todos os dados são necessários para cadastrar o registro!", HttpStatus.BAD_REQUEST);
+    public List<RecipientDTO> getAllByClientId(Long id) {
+        List<Recipient> recipients = recipientRepository.findAllByClientId(id);
+        List<RecipientDTO> response = new ArrayList<>();
+
+        for (Recipient recipient:recipients) {
+            response.add(new RecipientDTO(recipient));
         }
 
+        return response;
+    }
+
+    public ResponseEntity<String> save(RecipientDTO data) {
         if(recipientRepository.findByName(data.name()).isEmpty()) {
+            if (data.name() == null || data.client_id() == null) {
+                return new ResponseEntity<>("Todos os dados são necessários para cadastrar o registro!", HttpStatus.BAD_REQUEST);
+            }
+
+            Optional<Client> client = clientRepository.findById(data.client_id());
+
+            if (client.isEmpty()) {
+                return new ResponseEntity<>("Um ou mais dados são inválidos para o cadastro do registro!", HttpStatus.BAD_REQUEST);
+            }
+
             Recipient recipient = new Recipient(data);
+            recipient.setClient(client.get());
+
             Recipient newRecipient = recipientRepository.save(recipient);
 
             if (newRecipient.getId() != null) {
@@ -47,11 +70,17 @@ public class RecipientService {
     }
 
     public ResponseEntity<String> update(Long id, RecipientDTO data) {
+        //Validações de segurança
+        if (data.client_id() != null) {
+            return new ResponseEntity<>("Não é possível alterar o emissor do registro!", HttpStatus.BAD_REQUEST);
+        }
+
         Optional<Recipient> recipient = recipientRepository.findById(id);
 
         if (recipient.isPresent() && data.name() != null) {
             Recipient newRecipient = new Recipient(data);
             newRecipient.setId(recipient.get().getId());
+            newRecipient.setClient(recipient.get().getClient());
             newRecipient.setName(data.name());
 
             Recipient updatedRecipient = recipientRepository.save(newRecipient);

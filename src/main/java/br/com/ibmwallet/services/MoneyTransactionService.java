@@ -1,8 +1,6 @@
 package br.com.ibmwallet.services;
 
-import br.com.ibmwallet.dtos.ClientDTO;
 import br.com.ibmwallet.dtos.MoneyTransactionDTO;
-import br.com.ibmwallet.dtos.MoneyTransactionFormattedDTO;
 import br.com.ibmwallet.entities.Category;
 import br.com.ibmwallet.entities.Client;
 import br.com.ibmwallet.entities.MoneyTransaction;
@@ -43,7 +41,7 @@ public class MoneyTransactionService {
         return response;
     }
 
-    public List<MoneyTransactionDTO> getAllByUserId(Long id) {
+    public List<MoneyTransactionDTO> getAllByClientId(Long id) {
         List<MoneyTransaction> moneyTransactions = moneyTransactionRepository.findAllByClientId(id);
         List<MoneyTransactionDTO> response = new ArrayList<>();
 
@@ -81,6 +79,11 @@ public class MoneyTransactionService {
     }
 
     public ResponseEntity<String> update(Long id, MoneyTransactionDTO data) {
+        //Validações de segurança
+        if (data.client_id() != null) {
+            return new ResponseEntity<>("Não é possível alterar o emissor do registro!", HttpStatus.BAD_REQUEST);
+        }
+
         Optional<MoneyTransaction> moneyTransaction = moneyTransactionRepository.findById(id);
 
         if (moneyTransaction.isPresent()) {
@@ -92,6 +95,9 @@ public class MoneyTransactionService {
             newMoneyTransaction.setClient(moneyTransaction.get().getClient());
 
             if (data.value() != null) { newMoneyTransaction.setValue(data.value()); }
+            if (data.date() != null) {
+                newMoneyTransaction.setDate(data.date());
+            }
             if (data.category_id() != null) {
                 Optional<Category> newCategory = categoryRepository.findById(data.category_id());
 
@@ -105,15 +111,6 @@ public class MoneyTransactionService {
                 if (newRecipient.isPresent()) {
                     newMoneyTransaction.setRecipient(newRecipient.get());
                 }
-            }
-
-            //Validações de segurança
-            if (data.created_at() != null) {
-                return new ResponseEntity<>("Não é possível alterar a data da transação!", HttpStatus.BAD_REQUEST);
-            }
-
-            if (data.client_id() != null) {
-                return new ResponseEntity<>("Não é possível alterar o emissor da transação!", HttpStatus.BAD_REQUEST);
             }
 
             MoneyTransaction updatedMoneyTransaction = moneyTransactionRepository.save(newMoneyTransaction);

@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.util.List;
 
 @Getter
@@ -20,10 +19,18 @@ public class Category {
     @Column(unique=true, nullable=false)
     private String name;
 
+    @ManyToOne
+    @JoinColumn(name="client_id", nullable=false)
+    private Client client;
+
     @OneToMany(mappedBy="category")
     private List<MoneyTransaction> transactions;
 
     public Category(CategoryDTO data) {
         this.name = data.name();
+    }
+
+    public Long getClientId() {
+        return (client != null) ? client.getId() : null;
     }
 }

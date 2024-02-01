@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
@@ -32,6 +33,7 @@ public class MoneyTransaction extends Audit {
 
     public MoneyTransaction(MoneyTransactionDTO data) {
         this.value = data.value();
+        this.date = data.date();
     }
 
     public Long getCategoryId() {

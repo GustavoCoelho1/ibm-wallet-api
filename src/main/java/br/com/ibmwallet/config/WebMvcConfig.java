@@ -11,17 +11,16 @@ import java.util.List;
 
 //Arquivo para configurar todas respostas da API automaticamente como JSON
 
-@Configuration
-@EnableWebMvc
+//@Configuration
+//@EnableWebMvc
 public class WebMvcConfig implements WebMvcConfigurer {
+    //@Bean
+    //public MappingJackson2HttpMessageConverter jsonConverter() {
+    // return new MappingJackson2HttpMessageConverter();
+    // }
 
-    @Bean
-    public MappingJackson2HttpMessageConverter jsonConverter() {
-        return new MappingJackson2HttpMessageConverter();
-    }
-
-    @Override
-    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-        converters.add(jsonConverter());
-    }
+    //@Override
+    //public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        //    converters.add(jsonConverter());
+    //}
 }

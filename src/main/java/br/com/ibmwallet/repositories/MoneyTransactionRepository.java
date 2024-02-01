@@ -1,7 +1,5 @@
 package br.com.ibmwallet.repositories;
 
-import br.com.ibmwallet.dtos.MoneyTransactionFormattedDTO;
-import br.com.ibmwallet.entities.Client;
 import br.com.ibmwallet.entities.MoneyTransaction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
