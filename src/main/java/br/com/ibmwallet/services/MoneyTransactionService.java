@@ -1,5 +1,6 @@
 package br.com.ibmwallet.services;
 
+import br.com.ibmwallet.dtos.LargeScaleSaveRequestDTO;
 import br.com.ibmwallet.dtos.MoneyTransactionDTO;
 import br.com.ibmwallet.entities.Category;
 import br.com.ibmwallet.entities.Client;
@@ -9,11 +10,16 @@ import br.com.ibmwallet.repositories.CategoryRepository;
 import br.com.ibmwallet.repositories.ClientRepository;
 import br.com.ibmwallet.repositories.MoneyTransactionRepository;
 import br.com.ibmwallet.repositories.RecipientRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +34,9 @@ public class MoneyTransactionService {
     private RecipientRepository recipientRepository;
     @Autowired
     private ClientRepository clientRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
 
     public List<MoneyTransactionDTO> getAll() {
@@ -76,6 +85,126 @@ public class MoneyTransactionService {
             return new ResponseEntity<>("Registro cadastrado com sucesso!", HttpStatus.OK);
         }
         return new ResponseEntity<>("Houve um erro ao cadastrar o registro!", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private boolean isNumeric(String str) {
+        try {
+            Double.parseDouble(str);
+            return true;
+        } catch (NumberFormatException e) {
+            System.out.println("Erro aqui");
+            return false;
+        }
+    }
+
+    private boolean isValidDate(String date) {
+        String[] dateArr = date.split("-");
+
+        if (dateArr.length != 3) {
+            return false;
+        }
+
+        boolean yearNaN = !isNumeric(dateArr[0]);
+        boolean monthNaN = !isNumeric(dateArr[1]);
+        boolean dayNaN = !isNumeric(dateArr[2]);
+
+        if (dateArr[0].length() != 4 || yearNaN) {
+            // Campo de ano, ano deve ter 4 dígitos e deve ser um número
+            return false;
+        }
+
+        if (dateArr[1].length() != 2 || monthNaN) {
+            // Campo de mês, mês deve ter 2 dígitos e deve ser um número
+            return false;
+        }
+
+        if (dateArr[2].length() != 2 || dayNaN) {
+            // Campo de dia, dia deve ter 2 dígitos e deve ser um número
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean isValidValue(String value) {
+        return isNumeric(value);
+    }
+
+    private Long getCategoryId(List<Category> categoryList, String categoryName) {
+        Optional<Category> categoryInList = categoryList.stream()
+                .filter(cat -> cat.getName().equals(categoryName)).findFirst();
+
+        if (categoryInList.isPresent()) {
+            return categoryInList.get().getId();
+        }
+
+        return 0L; //Retorna zero se não encontrar
+    }
+
+    private Long getRecipientId(List<Recipient> recipientList, String recipientName) {
+        Optional<Recipient> recipientInList = recipientList.stream()
+                .filter(rec -> rec.getName().equals(recipientName)).findFirst();
+
+        if (recipientInList.isPresent()) {
+            return recipientInList.get().getId();
+        }
+
+        return 0L; //Retorna zero se não encontrar
+    }
+
+    @Transactional
+    public ResponseEntity<String> largeScaleSave(LargeScaleSaveRequestDTO data) { //Informação virá no formato: [["<data>", "<valor>", "<categoria>", "<destinatário/remetente>"], ["<data>", "<valor>", "<categoria>", "<destinatário/remetente>"]]
+        if (data.client_id() == null || data.dataList().isEmpty()) {
+            return new ResponseEntity<>("Todos os dados são necessários para cadastrar os registros!", HttpStatus.BAD_REQUEST);
+        }
+
+        Optional<Client> client = clientRepository.findById(data.client_id());
+        if (client.isEmpty()) {
+            return new ResponseEntity<>("ID de cliente inválido para o cadastro do registro!", HttpStatus.BAD_REQUEST);
+        }
+
+        Long clientId = client.get().getId();
+
+        List<List<String>> dataList = data.dataList();
+
+        List<Category> categoryList = categoryRepository.findAll();
+        List<Recipient> recipientList = recipientRepository.findAll();
+
+        int list_register = 1;
+
+        ResponseEntity<String> errorMsg = new ResponseEntity<>("Dados inválidos no registro núm. " + list_register + "!", HttpStatus.BAD_REQUEST);
+
+        for (List<String> transactionData:dataList) { //Valida os dados de cada uma dos registros, e retorna o número (index) da linha incorreta
+            if (transactionData.size() != 4) {
+                return errorMsg;
+            }
+
+            String dateArr = transactionData.get(0);
+            String valueStr = transactionData.get(1);
+            String categoryName = transactionData.get(2);
+            String recipientName = transactionData.get(3);
+
+            Long categoryId = getCategoryId(categoryList, categoryName);
+            Long recipientId = getRecipientId(recipientList, recipientName);
+
+            if (!isValidDate(dateArr) || !isValidValue(valueStr) || categoryId == 0 || recipientId == 0) {
+                return errorMsg;
+            }
+
+            Double value = Double.parseDouble(valueStr);
+            LocalDate date = LocalDate.parse(dateArr);
+
+            //Rodando query nativamente para melhorar a performace da operação
+            entityManager.createNativeQuery("INSERT INTO money_transaction (client_id, date, value, category_id, recipient_id) VALUES (?, ?, ?, ?, ?)")
+                    .setParameter(1, clientId)
+                    .setParameter(2, date)
+                    .setParameter(3, value)
+                    .setParameter(4, categoryId)
+                    .setParameter(5, recipientId)
+                    .executeUpdate();
+        }
+
+        return new ResponseEntity<>("Registros inseridos com sucesso!", HttpStatus.OK);
     }
 
     public ResponseEntity<String> update(Long id, MoneyTransactionDTO data) {
@@ -135,5 +264,19 @@ public class MoneyTransactionService {
             return new ResponseEntity<>("Houve um erro ao apagar o registro!", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<>("ID inexistente!", HttpStatus.BAD_REQUEST);
+    }
+
+    public ResponseEntity<String> clearAll() {
+        try {
+            moneyTransactionRepository.clearAll();
+
+            if (moneyTransactionRepository.findAll().isEmpty()) {
+                return new ResponseEntity<>("Base de dados limpa com sucesso!", HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Houve um erro ao limpar a base de dados!", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Houve um erro ao limpar a base de dados!", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package br.com.ibmwallet.controllers;
 
+import br.com.ibmwallet.dtos.LargeScaleSaveRequestDTO;
 import br.com.ibmwallet.dtos.MoneyTransactionDTO;
 import br.com.ibmwallet.services.MoneyTransactionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,6 +44,17 @@ public class MoneyTransactionController {
         return moneyTransactionService.save(data);
     }
 
+    @PostMapping("/largeScale")
+    @Operation(summary = "Salva múltiplos registros de Transação de uma só vez. Template ('<data>,<valor>,<nome_categoria>,<destinátário/remetente>')", method = "POST")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Dados salvos com sucesso!"),
+            @ApiResponse(responseCode = "500", description = "Erro ao salvar dados"),
+            @ApiResponse(responseCode = "400", description = "Erro nos dados passados para requisição")
+    })
+    public ResponseEntity<String> largeScaleSave(@RequestBody LargeScaleSaveRequestDTO data) {
+        return moneyTransactionService.largeScaleSave(data);
+    }
+
     @PutMapping
     @Operation(summary = "Atualiza um registro de Transação, cujo ID deve estar contido nos parâmetros da requisição", method = "PUT")
     @ApiResponses(value = {
@@ -60,4 +72,12 @@ public class MoneyTransactionController {
             @ApiResponse(responseCode = "400", description = "Erro ao passar ID inválido (não cadastrado) para requisição")
     })
     public ResponseEntity<String> delete(@RequestParam("delete") Long id) { return moneyTransactionService.delete(id); }
+
+    @DeleteMapping("/clearAll")
+    @Operation(summary = "Limpa todos os registros da tabela de Transação, sem restrições", method = "DELETE")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Dados deletados com sucesso!"),
+            @ApiResponse(responseCode = "500", description = "Erro ao deletar dados"),
+    })
+    public ResponseEntity<String> clearAll() { return moneyTransactionService.clearAll(); }
 }
