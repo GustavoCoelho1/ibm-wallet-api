@@ -28,7 +28,7 @@ public class Client {
     @Column(nullable = false)
     private String password;
 
-    @OneToMany(mappedBy="client")
+    @OneToMany(mappedBy="client", cascade = CascadeType.REMOVE)
     private List<MoneyTransaction> transactions;
 
     public Client(ClientDTO data) {

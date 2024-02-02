@@ -113,13 +113,13 @@ public class MoneyTransactionService {
             return false;
         }
 
-        if (dateArr[1].length() != 2 || monthNaN) {
-            // Campo de mês, mês deve ter 2 dígitos e deve ser um número
+        if (dateArr[1].length() != 2 || monthNaN || Integer.parseInt(dateArr[1]) < 1 || Integer.parseInt(dateArr[1]) > 12) {
+            // Campo de mês, mês deve ter 2 dígitos, deve ser um número e deve estar entre o período de 1 e 12
             return false;
         }
 
-        if (dateArr[2].length() != 2 || dayNaN) {
-            // Campo de dia, dia deve ter 2 dígitos e deve ser um número
+        if (dateArr[2].length() != 2 || dayNaN || Integer.parseInt(dateArr[2]) < 1 || Integer.parseInt(dateArr[2]) > 31) {
+            // Campo de dia, dia deve ter 2 dígitos, deve ser um número e deve estar entre o período de 1 e 31
             return false;
         }
 
@@ -276,6 +276,7 @@ public class MoneyTransactionService {
                 return new ResponseEntity<>("Houve um erro ao limpar a base de dados!", HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } catch (Exception e) {
+            System.out.println(e);
             return new ResponseEntity<>("Houve um erro ao limpar a base de dados!", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
