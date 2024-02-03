@@ -1,2 +1,2 @@
 # IBM Wallet (API)
-API que fornece dados para o app ibm-wallet
+Confira a documentação do projeto completo <a href="https://github.com/GustavoCoelho1/ibm-wallet">aqui</a>
