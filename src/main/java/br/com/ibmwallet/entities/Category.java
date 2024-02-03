@@ -10,13 +10,14 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name="category")
+@Table(name="category", uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "client_id"})}) //Essa constraint restringe um cliente a poder criar uma categoria apenas uma vez, sem poder repití-la.
 @Entity(name="category")
+
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(unique=true, nullable=false)
+    @Column(nullable=false)
     private String name;
 
     @ManyToOne
