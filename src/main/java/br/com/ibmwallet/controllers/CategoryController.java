@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@CrossOrigin("http://localhost:4200/")
+@CrossOrigin(origins = {"http://localhost:4200", "https://ibm-wallet.vercel.app/"})
 @RequestMapping("category")
 public class CategoryController {
     @Autowired

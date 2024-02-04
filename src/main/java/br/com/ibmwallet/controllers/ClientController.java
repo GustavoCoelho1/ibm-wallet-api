@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("client")
-@CrossOrigin("http://localhost:4200/")
+@CrossOrigin(origins = {"http://localhost:4200", "https://ibm-wallet.vercel.app/"})
 public class ClientController {
     @Autowired
     private ClientService clientService;
